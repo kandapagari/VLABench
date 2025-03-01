@@ -26,26 +26,38 @@ class VLMEvaluator(Evaluator):
         self.save_path = save_path
         if not os.path.exists(save_path):
             os.makedirs(save_path)
-        self.all_task_list = os.listdir(data_path)
-        self.all_task_list.remove("data_complement_check.ipynb")
+
+        self.dim_all = os.listdir(data_path).remove("data_complement_check.ipynb")
+        self.dim2task = {}
+        self.task2dim = {}
+        self.all_task_list = []
+        for dim in self.dim_all:
+            dim_task_list = os.listdir(os.path.join(data_path, dim))
+            self.all_task_list += dim_task_list
+            self.dim2task[dim] = dim_task_list
+            for task in dim_task_list:
+                self.task2dim[task] = dim
+
+
         self.eval_tasks = tasks
         with open(os.path.join(os.environ["VLABENCH_ROOT"], f"configs/prompt/eval_vlm_{language}.txt"), 'r', encoding='utf-8') as file:
             self.pre_prompt = file.read()
         seq_independent_task_config_path = os.path.join(os.environ["VLABENCH_ROOT"], "configs/evaluation/seq_independent_task.json")
         with open(seq_independent_task_config_path, 'r') as f:
             self.seq_independent_task = json.load(f)
-        dim2task_config_path = os.path.join(os.environ["VLABENCH_ROOT"], "configs/evaluation/dim2task.json")
-        with open(dim2task_config_path, 'r') as f:
-            self.dim2task = json.load(f)
-        self.task2dim = {} # task_name to evaluation dimension
-        self.get_task2dim()
+            
+        # dim2task_config_path = os.path.join(os.environ["VLABENCH_ROOT"], "configs/evaluation/dim2task.json")
+        # with open(dim2task_config_path, 'r') as f:
+        #     self.dim2task = json.load(f)
+        # self.task2dim = {} # task_name to evaluation dimension
+        # self.get_task2dim()
         self.language = language
         
-    def get_task2dim(self):
-        for dim in self.dim2task:
-            for task in self.dim2task[dim]:
-                self.task2dim[task] = dim
-        return self.task2dim
+    # def get_task2dim(self):
+    #     for dim in self.dim2task:
+    #         for task in self.dim2task[dim]:
+    #             self.task2dim[task] = dim
+    #     return self.task2dim
 
     def change_language(self, language):
         self.language = language
@@ -57,27 +69,27 @@ class VLMEvaluator(Evaluator):
 
         if few_shot_num != 0:
             prepared_input["shot_input_pic"] = {}
-            prepared_input["shot_input_pic_gt"] = {}
+            prepared_input["shot_input_pic_mask"] = {}
             prepared_input["shot_input_instruction"] = {}
             prepared_input["shot_output"] = {}
         for i in range(few_shot_num):
             shot_task_name = random.choice(self.all_task_list)
-            shot_example_num = int(random.choice(os.listdir(os.path.join(self.data_path, shot_task_name)))[7:])
+            shot_example_num = int(random.choice(os.listdir(os.path.join(self.data_path, self.task2dim[task_name], shot_task_name)))[7:])
             while shot_task_name == task_name and shot_example_num == example_num:
                 shot_task_name = random.choice(self.all_task_list)
-                shot_example_num = int(random.choice(os.listdir(os.path.join(self.data_path, shot_task_name)))[7:])
+                shot_example_num = int(random.choice(os.listdir(os.path.join(self.data_path, self.task2dim[task_name], shot_task_name)))[7:])
 
-            shot_input_pic, shot_input_pic_gt, shot_input_instruction = self.load_single_input(shot_task_name, shot_example_num)
+            shot_input_pic, shot_input_pic_mask, shot_input_instruction = self.load_single_input(shot_task_name, shot_example_num)
             shot_output = self.load_single_output(shot_task_name, shot_example_num)
 
             prepared_input["shot_input_pic"][str(i)] = shot_input_pic
-            prepared_input["shot_input_pic_gt"][str(i)] = shot_input_pic_gt
+            prepared_input["shot_input_pic_mask"][str(i)] = shot_input_pic_mask
             prepared_input["shot_input_instruction"][str(i)] = shot_input_instruction
             prepared_input["shot_output"][str(i)] = shot_output
 
-        input_pic, input_pic_gt, input_instruction  = self.load_single_input(task_name, example_num)
+        input_pic, input_pic_mask, input_instruction  = self.load_single_input(task_name, example_num)
         prepared_input["input_pic"] = input_pic
-        prepared_input["input_pic_gt"] = input_pic_gt
+        prepared_input["input_pic_mask"] = input_pic_mask
         prepared_input["input_instruction"] = input_instruction
 
         return prepared_input
@@ -93,18 +105,18 @@ class VLMEvaluator(Evaluator):
         return model_result_save_path
     
     def load_single_input(self, task_name, example_num):
-        input_pic_path = os.path.join(self.data_path, task_name, "example"+ str(example_num), 'input/input.png')
-        input_pic_gt_path = os.path.join(self.data_path, task_name, "example"+ str(example_num), 'input/input_gt.png')
-        input_instruction_path = os.path.join(self.data_path, task_name, "example"+ str(example_num), 'input/instruction.txt')
+        input_pic_path = os.path.join(self.data_path, self.task2dim[task_name], task_name, "example"+ str(example_num), 'input/input.png')
+        input_pic_mask_path = os.path.join(self.data_path, self.task2dim[task_name], task_name, "example"+ str(example_num), 'input/input_mask.png')
+        input_instruction_path = os.path.join(self.data_path, self.task2dim[task_name], task_name, "example"+ str(example_num), 'input/instruction.txt')
 
         input_pic = input_pic_path
-        input_pic_gt = input_pic_gt_path
+        input_pic_mask = input_pic_mask_path
         input_instruction = input_instruction = open(input_instruction_path, 'r', encoding='utf-8').read()
 
-        return input_pic, input_pic_gt, input_instruction
+        return input_pic, input_pic_mask, input_instruction
     
     def load_single_output(self, task_name, example_num):
-        gt_operation_sequence_path = os.path.join(self.data_path, task_name, "example"+ str(example_num), 'output/operation_sequence.json')
+        gt_operation_sequence_path = os.path.join(self.data_path, self.task2dim[task_name], task_name, "example"+ str(example_num), 'output/operation_sequence.json')
         with open(gt_operation_sequence_path) as f:
             gt_operation_sequence = json.load(f)
         return gt_operation_sequence
@@ -119,8 +131,16 @@ class VLMEvaluator(Evaluator):
         if any([key in answer for key in ["skill_sequence", "format_error"]]):
             return True
         return False
+    
+    def dim_task_check(self, task_list, dim_list):
+        if task_list is not None:
+            for task in task_list:
+                assert task in self.all_task_list, f"Task {task} not in the task list"
+        if dim_list is not None:
+            for dim in dim_list:
+                assert dim in self.dim_all, f"Dimension {dim} not in the dimension list"
 
-    def evaluate(self, vlm, task_list=None, save_interval=1, few_shot_num=0, with_CoT=False):
+    def evaluate(self, vlm, task_list=None, dim_list=None, save_interval=1, few_shot_num=0, with_CoT=False):
         """
         param:
           vlm: the wrapped vlm model with standard interface
@@ -132,8 +152,17 @@ class VLMEvaluator(Evaluator):
         print(Fore.YELLOW + Style.BRIGHT + "\n\nworking on ",end = "")
         print(Fore.BLUE + Style.BRIGHT + vlm.name)
 
-        if task_list is None or len(task_list) == 0:
+        self.dim_task_check(task_list, dim_list)
+        if (task_list is None or len(task_list) == 0 and (dim_list is None or len(dim_list) == 0)):
             task_list = self.all_task_list
+        else:
+            task_list = task_list if task_list is not None else []
+            dim_list = dim_list if dim_list is not None else []
+            task_list = [task for task in self.all_task_list if task in task_list]
+            for dim in dim_list:
+                task_list += self.dim2task[dim]
+            task_list = list(set(task_list))
+
         model_result_save_path = os.path.join(self.save_path, vlm.name, self.language)
         if not os.path.exists(model_result_save_path):
             os.makedirs(model_result_save_path)
@@ -155,7 +184,7 @@ class VLMEvaluator(Evaluator):
         is_resuming = False
         existing_num = 0
         for task_name in task_list:
-            for example_num in range(len(os.listdir(os.path.join(self.data_path, task_name)))):
+            for example_num in range(len(os.listdir(os.path.join(self.data_path, self.task2dim[task_name], task_name)))):
                 if task_name in model_output and str(example_num) in model_output[task_name]:
                     if self.check_filled_output(model_output[task_name][str(example_num)]):
                         is_resuming = True
