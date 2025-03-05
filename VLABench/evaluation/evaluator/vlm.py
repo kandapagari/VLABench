@@ -26,8 +26,9 @@ class VLMEvaluator(Evaluator):
         self.save_path = save_path
         if not os.path.exists(save_path):
             os.makedirs(save_path)
-
-        self.dim_all = os.listdir(data_path).remove("data_complement_check.ipynb")
+            
+        self.dim_all = os.listdir(data_path)
+        self.dim_all.remove("data_complement_check.ipynb")
         self.dim2task = {}
         self.task2dim = {}
         self.all_task_list = []
