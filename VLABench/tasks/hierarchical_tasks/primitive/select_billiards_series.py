@@ -117,8 +117,9 @@ class SelectBilliardsCommonSenseConfigManager(SelectBilliardsConfigManager):
 
 @register.add_config_manager("select_billiards_semantic")
 class SelectBilliardsSemanticConfigManager(SelectBilliardsConfigManager):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, task_name, num_objects=[4, 5], seen_object=BILLIARDS[::2], unseen_object=BILLIARDS[1::2], **kwargs):
+        super().__init__(task_name=task_name, num_objects=num_objects, seen_object=seen_object, unseen_object=unseen_object, **kwargs)
+        
     
 @register.add_task("select_billiards")
 class SelectBilliardsTask(LM4ManipBaseTask):
