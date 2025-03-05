@@ -25,9 +25,12 @@ class SelectBilliardsConfigManager(BenchTaskConfigManager):
     def __init__(self, 
                  task_name,
                  num_objects=[4, 5],
+                 seen_object=BILLIARDS[::2], 
+                 unseen_object=BILLIARDS[1::2],
                  **kwargs):
-        super().__init__(task_name, num_objects, seen_object=BILLIARDS[::2], unseen_object=BILLIARDS[1::2], **kwargs)
-    
+        super().__init__(task_name, num_objects, **kwargs)
+        self.seen_object = seen_object
+        self.unseen_object = unseen_object
     def load_containers(self, **kwargs):
         billiards_table = self.get_entity_config("billiards_table",
                                                  position=[0, 0, 0])
@@ -77,10 +80,14 @@ class SelectBilliardsSpatialConfigManager(SelectBilliardsConfigManager):
 @register.add_config_manager("select_billiards_common_sense")
 class SelectBilliardsCommonSenseConfigManager(SelectBilliardsConfigManager):
     def __init__(self, 
-                 task_name, 
-                 num_objects=[4, 5], 
+                 task_name,
+                 num_objects=[4, 5],
+                 seen_object=BILLIARDS[::2], 
+                 unseen_object=BILLIARDS[1::2],
                  **kwargs):
-        super().__init__(task_name, num_objects, seen_object=SNOOKER[::2], unseen_object=SNOOKER[1::2], **kwargs)
+        super().__init__(task_name, num_objects, **kwargs)
+        self.seen_object = seen_object
+        self.unseen_object = unseen_object
     
     def load_objects(self, target_entity):
         objects = [target_entity]
@@ -96,6 +103,8 @@ class SelectBilliardsCommonSenseConfigManager(SelectBilliardsConfigManager):
             self.config["task"]["components"].append(billiard_config)
     
     def get_instruction(self, target_entity, **kwargs):
+        score = 0
+        print(target_entity)
         if "red" in target_entity: score = 1
         elif "yellow" in target_entity: score = 2
         elif "brown" in target_entity: score = 3

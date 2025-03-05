@@ -11,7 +11,7 @@ name2config = {
     "select_toy_series": ["select_toy", "select_toy_spatial", "select_toy_common_sense", "select_toy_semantic"],
     "select_ingredient_series": ["select_ingredient", "select_ingredient_spatial", "select_ingredient_common_sense", "select_ingredient_semantic"],
     "select_painting_series":["select_painting", "put_box_on_painting", "select_painting_semantic"],
-    "physical_qa_series":["friction_qa", "denisty_qa", "magnetism_qa", "reflection_qa", "speed_of_sound_qa", "thermal_expansion_qa", "weight_qa"],
+    "physical_qa_series":["friction_qa", "density_qa", "magnetism_qa", "reflection_qa", "speed_of_sound_qa", "thermal_expansion_qa", "weight_qa"],
     # composite tasks
     "texas_holdem_series":["texas_holdem", "texas_holdem_explore"],
     "set_dining_table_series":["set_dining_table", "set_dining_left_hand", "set_dining_chopstick"],
