@@ -154,7 +154,7 @@ class VLMEvaluator(Evaluator):
         print(Fore.BLUE + Style.BRIGHT + vlm.name)
 
         self.dim_task_check(task_list, dim_list)
-        if (task_list is None or len(task_list) == 0 and (dim_list is None or len(dim_list) == 0)):
+        if (task_list is None or len(task_list) == 0) and (dim_list is None or len(dim_list) == 0):
             task_list = self.all_task_list
         else:
             task_list = task_list if task_list is not None else []
