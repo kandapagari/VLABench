@@ -91,11 +91,11 @@ class AddCondimentTask(LM4ManipBaseTask):
                 pan.attach(dishes)
     
     def get_expert_skill_sequence(self, physics):
-        target_pos = np.array(self.entities[self.target_entity].get_xpos(physics)) + np.array([0, 0, 0.2])
+        target_pos = np.array(self.entities[self.target_container].get_xpos(physics)) + np.array([0, 0, 0.2])
         skill_sequence = [
             partial(SkillLib.pick, target_entity_name=self.target_entity, prior_eulers=[[-np.pi/2, -np.pi/2, np.pi/2]]),
             partial(SkillLib.lift, lift_height=0.2, gripper_state=np.zeros(2)),
-            partial(SkillLib.moveto, target_pos=target_pos),
+            partial(SkillLib.moveto, target_pos=target_pos, gripper_state=np.zeros(2)),
             partial(SkillLib.pour)
         ]
         return skill_sequence

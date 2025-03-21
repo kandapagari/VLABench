@@ -59,6 +59,37 @@ Run this to verify installation successful
 
     python -c "from octo.model.octo_model import OctoModel; model = OctoModel.load_pretrained('hf://rail-berkeley/octo-base-1.5'); print('Model loaded successfully')"
 
+## Data Collection
+### Run scripts to generate hdf5 dataset with multi-processing
+We provide a brief tutorial in `tutorials/2.auto_trajectory_generate.ipynb` and the whole codes are in `scripts/trajectory_generation.py`. Trajectory generation can be sped up several times by using multiple processes. A naive way to use it is: 
+```sh
+sh data_generation.sh
+```
+Currently, the version does not support multi-processing environment within the code. We will optimize the collection efficiency as much as possible in future updates. After running the script, each trajectory will be stored as a hdf5 file in the directory you specify.
+
+### Convert to rlds format
+Due to some frameworks such as [Octo](https://github.com/octo-models/octo) and [Openvla](https://github.com/openvla/openvla) using data in the RLDS format for training, we refer to the process from [rlds_dataset_builder](https://github.com/kpertsch/rlds_dataset_builder) to provide an example of converting the aforementioned HDF5 dataset into RLDS format data.
+First, run 
+```sh
+python scripts/convert_to_rlds.py --task [list] --save_dir /your/path/to/dataset
+```
+This will create a python file including the task rlds-builder in the directory.
+Then
+```sh
+cd /your/path/to/dataset/task
+
+tfds build
+```
+This process consumes a long time with only single process, and we are testing multithreading mthod yet. The codes of original repo seem to have some bugs. 
+
+### Convert to Lerobot format
+Following the Libero dataset process way of [openpi](https://github.com/Physical-Intelligence/openpi), we offer a simple way to convert hdf5 data files into lerobot format.
+Run the script by 
+```sh
+python scripts/convert_to_lerobot.py --dataset-name [your-dataset-name] --dataset-path /your/path/to/dataset --max-files 100
+```
+The processed Lerobot dataset will be stored defaultly in your `HF_HOME/lerobot/dataset-name`.
+
 ## Recent Work Todo
 - [x] Organize the functional code sections. 
     - [x] Reconstruct the efficient, user-friendly, and comprehensive evaluation framework. 
@@ -73,8 +104,8 @@ Run this to verify installation successful
     - [ ] Release standard finetune dataset.
 
 ## Expandation 
-VLABench adopts a flexible modular framework for task construction, offering high adaptability. You can follow the process outlined below to customize your own tasks.
-### Register New Entity
+VLABench adopts a flexible modular framework for task construction, offering high adaptability. You can follow the process outlined in [tutorial 6](tutorials/6.expandation.ipynb).
+<!-- ### Register New Entity
 1. Process the obj file with `obj2mjcf`(https://github.com/kevinzakka/obj2mjcf). Here is an use demo, `obj2mjcf --verbose --obj-dir your_own_obj_dir --compile-model --save-mjcf --decompose`
 2. Put the processed xml files/directory to somewhere under VLABench/assets/meshes.
 3. If it's a new class of entity, please register a entity class in VLABench/tasks/components with global register. Then, import the class in the `VLABench/tasks/components/__init__.py`.
@@ -82,13 +113,7 @@ VLABench adopts a flexible modular framework for task construction, offering hig
 
 ### Register New Task
 1. Create new task class file under `VLABench/tasks/hierarchical_tasks`. And register it with global register in `VLABench/utils/register.py`. Notice that if the current condition can not met your requirement, you should write a single Condition class in `VLABench/tasks/condition.py`.
-2. Import the new task class in `VLABench/tasks/hierarchical_tasks/__init__.py`.
-
-## Collect Data
-The latest data augmentation process is still under testing. Please wait for the official release!
-```sh
-python scripts/trajectory_generation.py --n-sample 100 --task-name select_poker
-```
+2. Import the new task class in `VLABench/tasks/hierarchical_tasks/__init__.py`. -->
 
 ## Evaluate
 I am currently updating the evaluation process, which includes making the tools more user-friendly, speeding up the entire evaluation workflow, and implementing a more comprehensive scoring system.
