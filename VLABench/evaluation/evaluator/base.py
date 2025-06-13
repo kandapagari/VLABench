@@ -139,7 +139,7 @@ class Evaluator:
                 pos, euler, gripper_state = agent.predict(observation, **kwargs)
                 last_action = np.concatenate([pos, euler])
                 quat = euler_to_quaternion(*euler)
-                success, action = env.robot.get_qpos_from_ee_pos(physics=env.physics, pos=pos, quat=quat)
+                _, action = env.robot.get_qpos_from_ee_pos(physics=env.physics, pos=pos, quat=quat)
                 action = np.concatenate([action, gripper_state])
             elif agent.control_mode == "joint":
                 qpos, gripper_state = agent.predict(observation, **kwargs)
